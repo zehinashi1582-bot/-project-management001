@@ -556,6 +556,7 @@
                 } else {
                     projects = [];
                 }
+                checkReleaseDate(); // リリース日チェック
                 renderProjects();
             });
         }
@@ -566,6 +567,7 @@
             if (saved) {
                 projects = JSON.parse(saved);
             }
+            checkReleaseDate(); // リリース日チェック
             renderProjects();
         }
 
@@ -667,6 +669,36 @@
             });
 
             updateStats();
+        }
+
+        // リリース日チェック（当日になったらリリース済に自動移動）
+        function checkReleaseDate() {
+            const today = new Date().toISOString().split('T')[0]; // yyyy-mm-dd形式
+            let hasChanges = false;
+
+            projects.forEach(project => {
+                if (project.status === 'リリース準備中' &&
+                    project.releaseDate &&
+                    project.releaseDate !== '未設定') {
+
+                    // リリース日をyyyy-mm-dd形式に正規化
+                    const releaseDate = project.releaseDate.replace(/\//g, '-');
+
+                    // リリース日が今日以前の場合、リリース済に移動
+                    if (releaseDate <= today) {
+                        project.status = 'リリース済';
+                        project.movedDate = new Date().toLocaleDateString('ja-JP');
+                        hasChanges = true;
+                    }
+                }
+            });
+
+            if (hasChanges) {
+                saveProjects();
+                if (!useFirebase) {
+                    renderProjects();
+                }
+            }
         }
 
         // カード作成
@@ -969,6 +1001,9 @@
 
         // 初期化
         initFirebase();
+
+        // 1分ごとにリリース日をチェック
+        setInterval(checkReleaseDate, 60000);
     </script>
 </body>
 </html>
