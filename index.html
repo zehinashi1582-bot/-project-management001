@@ -766,6 +766,12 @@
                 if (project && project.status !== newStatus) {
                     project.status = newStatus;
                     project.movedDate = new Date().toLocaleDateString('ja-JP');
+
+                    // 制作中に移動したら次報告予定日をクリア
+                    if (newStatus === '制作中') {
+                        project.nextReportDate = '未設定';
+                    }
+
                     saveProjects();
 
                     if (!useFirebase) {
@@ -815,6 +821,12 @@
             if (project) {
                 project.status = newStatus;
                 project.movedDate = new Date().toLocaleDateString('ja-JP');
+
+                // 制作中に移動したら次報告予定日をクリア
+                if (newStatus === '制作中') {
+                    project.nextReportDate = '未設定';
+                }
+
                 saveProjects();
 
                 if (!useFirebase) {
