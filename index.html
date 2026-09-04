@@ -281,7 +281,8 @@
             </div>
         </div>
         <div class="add-project">
-            <input type="text" id="projectName" placeholder="新プロジェクト名...">
+            <input type="text" id="projectName" placeholder="プロジェクト名...">
+            <input type="text" id="projectOwner" placeholder="担当者名...">
             <button onclick="addProject()">➕ 追加</button>
         </div>
     </div>
@@ -292,22 +293,19 @@
             <div class="cards" data-status="企画中"></div>
         </div>
 
-        <div class="column" data-status="撮影中">
-            <div class="column-header column-撮影中">📷 撮影中</div>
-            <div class="cards" data-status="撮影中"></div>
+        <div class="column" data-status="企画内容部長承認済み">
+            <div class="column-header column-撮影中">📷 企画内容部長承認済み</div>
+            <div class="cards" data-status="企画内容部長承認済み"></div>
         </div>
 
-        <div class="column" data-status="編集中">
-            <div class="column-header column-編集中">✏️ 編集中</div>
-            <div class="cards" data-status="編集中"></div>
+        <div class="column" data-status="アセット制作中">
+            <div class="column-header column-編集中">✏️ アセット制作中</div>
+            <div class="cards" data-status="アセット制作中"></div>
         </div>
 
         <div class="column" data-status="払い出し課長承認済み">
             <div class="column-header column-承認取得済">✅ 払い出し課長承認済み</div>
             <div class="cards" data-status="払い出し課長承認済み"></div>
-            <div class="warning" style="background: #d1fae5; border-color: #10b981; color: #065f46;">
-                ✓ リリース可能
-            </div>
         </div>
 
         <div class="column" data-status="リリース済">
@@ -413,13 +411,16 @@
 
         // プロジェクト追加
         function addProject() {
-            const input = document.getElementById('projectName');
-            const name = input.value.trim();
+            const nameInput = document.getElementById('projectName');
+            const ownerInput = document.getElementById('projectOwner');
+            const name = nameInput.value.trim();
+            const owner = ownerInput.value.trim();
 
             if (name) {
                 const project = {
                     id: Date.now(),
                     name: name,
+                    owner: owner || '未設定',
                     status: '企画中',
                     createdDate: new Date().toLocaleDateString('ja-JP'),
                     movedDate: new Date().toLocaleDateString('ja-JP')
@@ -432,12 +433,19 @@
                     renderProjects();
                 }
 
-                input.value = '';
+                nameInput.value = '';
+                ownerInput.value = '';
             }
         }
 
         // Enterキー対応
         document.getElementById('projectName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addProject();
+            }
+        });
+
+        document.getElementById('projectOwner').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 addProject();
             }
@@ -481,8 +489,9 @@
 
             card.innerHTML = `
                 <div class="card-title">${project.name}</div>
-                <div class="card-date">作成: ${project.createdDate}</div>
-                <div class="card-date">移動: ${project.movedDate}</div>
+                <div class="card-date">担当者: ${project.owner || '未設定'}</div>
+                <div class="card-date">作成日: ${project.createdDate}</div>
+                <div class="card-date">移動日: ${project.movedDate}</div>
                 <button class="card-delete" onclick="deleteProject(${project.id})">削除</button>
             `;
 
