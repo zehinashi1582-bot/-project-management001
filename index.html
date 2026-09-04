@@ -169,6 +169,22 @@
             margin-bottom: 4px;
         }
 
+        .next-report-date {
+            font-size: 11px;
+            color: #991b1b;
+            margin-bottom: 8px;
+            padding: 6px;
+            border: 2px solid #ef4444;
+            border-radius: 5px;
+            background: #fef2f2;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .next-report-date:hover {
+            background: #fee2e2;
+        }
+
         .card-delete {
             background: #ef4444;
             color: white;
@@ -401,9 +417,9 @@
             <div class="cards" data-status="企画中"></div>
         </div>
 
-        <div class="column" data-status="企画内容部長承認済み">
-            <div class="column-header column-撮影中">📷 企画内容部長承認済み</div>
-            <div class="cards" data-status="企画内容部長承認済み"></div>
+        <div class="column" data-status="企画内容部長報告チェック">
+            <div class="column-header column-撮影中">📷 企画内容部長報告チェック</div>
+            <div class="cards" data-status="企画内容部長報告チェック"></div>
         </div>
 
         <div class="column" data-status="制作中">
@@ -411,9 +427,9 @@
             <div class="cards" data-status="制作中"></div>
         </div>
 
-        <div class="column" data-status="払い出し課長承認済み">
-            <div class="column-header column-承認取得済">✅ 払い出し課長承認済み</div>
-            <div class="cards" data-status="払い出し課長承認済み"></div>
+        <div class="column" data-status="払い出し課長報告チェック">
+            <div class="column-header column-承認取得済">✅ 払い出し課長報告チェック</div>
+            <div class="cards" data-status="払い出し課長報告チェック"></div>
         </div>
 
         <div class="column" data-status="リリース済">
@@ -631,30 +647,32 @@
             card.dataset.id = project.id;
 
             let approvalCheckbox = '';
-            if (project.status === '企画内容部長承認済み') {
+            if (project.status === '企画内容部長報告チェック') {
                 approvalCheckbox = `
                     <div class="approval-check">
                         <input type="checkbox" id="director-${project.id}" ${project.directorApproved ? 'checked' : ''}
                                onchange="toggleDirectorApproval(${project.id})">
-                        <label for="director-${project.id}">部長承認完了</label>
+                        <label for="director-${project.id}">部長報告完了</label>
                     </div>
                 `;
-            } else if (project.status === '払い出し課長承認済み') {
+            } else if (project.status === '払い出し課長報告チェック') {
                 approvalCheckbox = `
                     <div class="approval-check">
                         <input type="checkbox" id="manager-${project.id}" ${project.managerApproved ? 'checked' : ''}
                                onchange="toggleManagerApproval(${project.id})">
-                        <label for="manager-${project.id}">課長承認完了</label>
+                        <label for="manager-${project.id}">課長報告完了</label>
                     </div>
                 `;
             }
 
             card.innerHTML = `
-                <div class="card-title" onclick="openEditModal(${project.id})" style="cursor: pointer;">${project.name}</div>
+                <div class="card-title">${project.name}</div>
                 <div class="card-date">担当者: ${project.owner || '未設定'}</div>
                 <div class="card-date">作成日: ${project.createdDate}</div>
                 <div class="card-date">移動日: ${project.movedDate}</div>
-                <div class="card-date">次報告予定日: ${project.nextReportDate || '未設定'}</div>
+                <div class="next-report-date" onclick="openEditModal(${project.id})">
+                    次報告予定日: ${project.nextReportDate || '未設定'}
+                </div>
                 ${approvalCheckbox}
                 <button class="card-delete" onclick="deleteProject(${project.id})">削除</button>
             `;
