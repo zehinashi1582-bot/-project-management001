@@ -128,7 +128,6 @@
         .column-企画中 { background: #9ca3af; }
         .column-撮影中 { background: #3b82f6; }
         .column-編集中 { background: #8b5cf6; }
-        .column-承認依頼済 { background: #f59e0b; }
         .column-承認取得済 { background: #10b981; }
         .column-リリース済 { background: #6b7280; }
 
@@ -278,7 +277,7 @@
                 総数: <span class="stat-number" id="totalProjects">0</span>
             </div>
             <div class="stat-item">
-                承認待ち: <span class="stat-number" id="waitingApproval">0</span>
+                課長承認済: <span class="stat-number" id="waitingApproval">0</span>
             </div>
         </div>
         <div class="add-project">
@@ -303,15 +302,9 @@
             <div class="cards" data-status="編集中"></div>
         </div>
 
-        <div class="column" data-status="承認依頼済">
-            <div class="column-header column-承認依頼済">⏳ 承認依頼済</div>
-            <div class="cards" data-status="承認依頼済"></div>
-            <div class="warning">⚠️ リリース禁止</div>
-        </div>
-
-        <div class="column" data-status="承認取得済">
-            <div class="column-header column-承認取得済">✅ 承認取得済</div>
-            <div class="cards" data-status="承認取得済"></div>
+        <div class="column" data-status="払い出し課長承認済み">
+            <div class="column-header column-承認取得済">✅ 払い出し課長承認済み</div>
+            <div class="cards" data-status="払い出し課長承認済み"></div>
             <div class="warning" style="background: #d1fae5; border-color: #10b981; color: #065f46;">
                 ✓ リリース可能
             </div>
@@ -609,7 +602,7 @@
         // 統計更新
         function updateStats() {
             document.getElementById('totalProjects').textContent = projects.length;
-            const waiting = projects.filter(p => p.status === '承認依頼済').length;
+            const waiting = projects.filter(p => p.status === '払い出し課長承認済み').length;
             document.getElementById('waitingApproval').textContent = waiting;
         }
 

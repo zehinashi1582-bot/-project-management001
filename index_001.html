@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プロモーション写真 プロジェクト管理ボード</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Meiryo", "メイリオ", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .add-project {
+            margin-top: 15px;
+        }
+
+        .add-project input {
+            padding: 10px;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            width: 300px;
+            margin-right: 10px;
+        }
+
+        .add-project button {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .add-project button:hover {
+            background: #5568d3;
+        }
+
+        .board {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+        }
+
+        .column {
+            background: white;
+            border-radius: 10px;
+            min-width: 280px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .column-header {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+        }
+
+        .column-企画中 { background: #9ca3af; }
+        .column-撮影中 { background: #3b82f6; }
+        .column-編集中 { background: #8b5cf6; }
+        .column-承認依頼済 { background: #f59e0b; }
+        .column-承認取得済 { background: #10b981; }
+        .column-リリース済 { background: #6b7280; }
+
+        .cards {
+            min-height: 100px;
+        }
+
+        .card {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: move;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+        }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .card-date {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .card-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .card-delete:hover {
+            background: #dc2626;
+        }
+
+        .column.drag-over {
+            background: #f3f4f6;
+        }
+
+        .warning {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #92400e;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            background: #f3f4f6;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .stat-number {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏍️ プロモーション写真 プロジェクト管理ボード</h1>
+        <div class="stats">
+            <div class="stat-item">
+                総プロジェクト数: <span class="stat-number" id="totalProjects">0</span>
+            </div>
+            <div class="stat-item">
+                承認待ち: <span class="stat-number" id="waitingApproval">0</span>
+            </div>
+        </div>
+        <div class="add-project">
+            <input type="text" id="projectName" placeholder="新しいプロジェクト名を入力...">
+            <button onclick="addProject()">➕ プロジェクト追加</button>
+        </div>
+    </div>
+
+    <div class="board" id="board">
+        <div class="column" data-status="企画中">
+            <div class="column-header column-企画中">📋 企画中</div>
+            <div class="cards" data-status="企画中"></div>
+        </div>
+
+        <div class="column" data-status="撮影中">
+            <div class="column-header column-撮影中">📷 撮影中</div>
+            <div class="cards" data-status="撮影中"></div>
+        </div>
+
+        <div class="column" data-status="編集中">
+            <div class="column-header column-編集中">✏️ 編集中</div>
+            <div class="cards" data-status="編集中"></div>
+        </div>
+
+        <div class="column" data-status="承認依頼済">
+            <div class="column-header column-承認依頼済">⏳ 承認依頼済</div>
+            <div class="cards" data-status="承認依頼済"></div>
+            <div class="warning">⚠️ この列のプロジェクトはリリース禁止</div>
+        </div>
+
+        <div class="column" data-status="承認取得済">
+            <div class="column-header column-承認取得済">✅ 承認取得済</div>
+            <div class="cards" data-status="承認取得済"></div>
+            <div class="warning" style="background: #d1fae5; border-color: #10b981; color: #065f46;">
+                ✓ リリース可能
+            </div>
+        </div>
+
+        <div class="column" data-status="リリース済">
+            <div class="column-header column-リリース済">🎉 リリース済</div>
+            <div class="cards" data-status="リリース済"></div>
+        </div>
+    </div>
+
+    <script>
+        let projects = [];
+
+        // ローカルストレージからデータ読み込み
+        function loadProjects() {
+            const saved = localStorage.getItem('promotionProjects');
+            if (saved) {
+                projects = JSON.parse(saved);
+                renderProjects();
+            }
+        }
+
+        // ローカルストレージに保存
+        function saveProjects() {
+            localStorage.setItem('promotionProjects', JSON.stringify(projects));
+            updateStats();
+        }
+
+        // プロジェクト追加
+        function addProject() {
+            const input = document.getElementById('projectName');
+            const name = input.value.trim();
+
+            if (name) {
+                const project = {
+                    id: Date.now(),
+                    name: name,
+                    status: '企画中',
+                    createdDate: new Date().toLocaleDateString('ja-JP'),
+                    movedDate: new Date().toLocaleDateString('ja-JP')
+                };
+
+                projects.push(project);
+                saveProjects();
+                renderProjects();
+                input.value = '';
+            }
+        }
+
+        // Enterキーでも追加できるように
+        document.getElementById('projectName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addProject();
+            }
+        });
+
+        // プロジェクト削除
+        function deleteProject(id) {
+            if (confirm('このプロジェクトを削除しますか？')) {
+                projects = projects.filter(p => p.id !== id);
+                saveProjects();
+                renderProjects();
+            }
+        }
+
+        // プロジェクト表示
+        function renderProjects() {
+            // 全カードエリアをクリア
+            document.querySelectorAll('.cards').forEach(area => {
+                area.innerHTML = '';
+            });
+
+            // プロジェクトを表示
+            projects.forEach(project => {
+                const card = createCard(project);
+                const area = document.querySelector(`.cards[data-status="${project.status}"]`);
+                if (area) {
+                    area.appendChild(card);
+                }
+            });
+
+            updateStats();
+        }
+
+        // カード作成
+        function createCard(project) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.draggable = true;
+            card.dataset.id = project.id;
+
+            card.innerHTML = `
+                <div class="card-title">${project.name}</div>
+                <div class="card-date">作成: ${project.createdDate}</div>
+                <div class="card-date">移動: ${project.movedDate}</div>
+                <button class="card-delete" onclick="deleteProject(${project.id})">削除</button>
+            `;
+
+            // ドラッグイベント
+            card.addEventListener('dragstart', handleDragStart);
+            card.addEventListener('dragend', handleDragEnd);
+
+            return card;
+        }
+
+        // ドラッグ開始
+        function handleDragStart(e) {
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.innerHTML);
+            e.dataTransfer.setData('projectId', e.target.dataset.id);
+        }
+
+        // ドラッグ終了
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        // ドロップエリアの設定
+        document.querySelectorAll('.cards').forEach(area => {
+            area.addEventListener('dragover', handleDragOver);
+            area.addEventListener('drop', handleDrop);
+            area.addEventListener('dragenter', handleDragEnter);
+            area.addEventListener('dragleave', handleDragLeave);
+        });
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            e.target.closest('.column').classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.target.closest('.column').classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            e.target.closest('.column').classList.remove('drag-over');
+
+            const projectId = parseInt(e.dataTransfer.getData('projectId'));
+            const newStatus = e.target.dataset.status;
+
+            // プロジェクトのステータス更新
+            const project = projects.find(p => p.id === projectId);
+            if (project) {
+                project.status = newStatus;
+                project.movedDate = new Date().toLocaleDateString('ja-JP');
+                saveProjects();
+                renderProjects();
+            }
+
+            return false;
+        }
+
+        // 統計更新
+        function updateStats() {
+            document.getElementById('totalProjects').textContent = projects.length;
+            const waiting = projects.filter(p => p.status === '承認依頼済').length;
+            document.getElementById('waitingApproval').textContent = waiting;
+        }
+
+        // 初期読み込み
+        loadProjects();
+    </script>
+</body>
+</html>
