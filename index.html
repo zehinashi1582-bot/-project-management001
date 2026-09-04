@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="プロジェクト管理">
+    <title>プロモーション写真 プロジェクト管理ボード</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Meiryo", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .firebase-status {
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .firebase-status.connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .firebase-status.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .firebase-status.local {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .add-project {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .add-project input {
+            padding: 10px;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .add-project button {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .add-project button:hover {
+            background: #5568d3;
+        }
+
+        .board {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .column {
+            background: white;
+            border-radius: 10px;
+            min-width: 250px;
+            max-width: 250px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .column {
+                min-width: 200px;
+                max-width: 200px;
+            }
+        }
+
+        .column-header {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+        }
+
+        .column-企画中 { background: #9ca3af; }
+        .column-撮影中 { background: #3b82f6; }
+        .column-編集中 { background: #8b5cf6; }
+        .column-承認依頼済 { background: #f59e0b; }
+        .column-承認取得済 { background: #10b981; }
+        .column-リリース済 { background: #6b7280; }
+
+        .cards {
+            min-height: 80px;
+        }
+
+        .card {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: move;
+            transition: all 0.2s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .card:active {
+            opacity: 0.8;
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+        }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 6px;
+            word-wrap: break-word;
+        }
+
+        .card-date {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .card-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 6px;
+            width: 100%;
+        }
+
+        .card-delete:active {
+            background: #dc2626;
+        }
+
+        .column.drag-over {
+            background: #f3f4f6;
+        }
+
+        .warning {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #92400e;
+            text-align: center;
+        }
+
+        .stats {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: #f3f4f6;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .stat-number {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .setup-instruction {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .setup-instruction h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .setup-instruction ol {
+            margin-left: 20px;
+            color: #78350f;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .setup-instruction code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .hide {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-instruction" id="setupInstruction">
+        <h3>🔧 Firebase設定が必要です</h3>
+        <ol>
+            <li>Firebase Console (<code>console.firebase.google.com</code>) でプロジェクト作成</li>
+            <li>Realtime Database を作成（テストモードで開始）</li>
+            <li>プロジェクト設定 → ウェブアプリを追加</li>
+            <li>表示される <code>firebaseConfig</code> を下のスクリプト部分にコピー</li>
+            <li>設定完了後、このメッセージは消えます</li>
+        </ol>
+    </div>
+
+    <div class="header">
+        <h1>🏍️ プロモーション写真管理</h1>
+        <div class="firebase-status local" id="firebaseStatus">
+            📡 ローカルモード（同期なし）
+        </div>
+        <div class="stats">
+            <div class="stat-item">
+                総数: <span class="stat-number" id="totalProjects">0</span>
+            </div>
+            <div class="stat-item">
+                承認待ち: <span class="stat-number" id="waitingApproval">0</span>
+            </div>
+        </div>
+        <div class="add-project">
+            <input type="text" id="projectName" placeholder="新プロジェクト名...">
+            <button onclick="addProject()">➕ 追加</button>
+        </div>
+    </div>
+
+    <div class="board" id="board">
+        <div class="column" data-status="企画中">
+            <div class="column-header column-企画中">📋 企画中</div>
+            <div class="cards" data-status="企画中"></div>
+        </div>
+
+        <div class="column" data-status="撮影中">
+            <div class="column-header column-撮影中">📷 撮影中</div>
+            <div class="cards" data-status="撮影中"></div>
+        </div>
+
+        <div class="column" data-status="編集中">
+            <div class="column-header column-編集中">✏️ 編集中</div>
+            <div class="cards" data-status="編集中"></div>
+        </div>
+
+        <div class="column" data-status="承認依頼済">
+            <div class="column-header column-承認依頼済">⏳ 承認依頼済</div>
+            <div class="cards" data-status="承認依頼済"></div>
+            <div class="warning">⚠️ リリース禁止</div>
+        </div>
+
+        <div class="column" data-status="承認取得済">
+            <div class="column-header column-承認取得済">✅ 承認取得済</div>
+            <div class="cards" data-status="承認取得済"></div>
+            <div class="warning" style="background: #d1fae5; border-color: #10b981; color: #065f46;">
+                ✓ リリース可能
+            </div>
+        </div>
+
+        <div class="column" data-status="リリース済">
+            <div class="column-header column-リリース済">🎉 リリース済</div>
+            <div class="cards" data-status="リリース済"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        let projects = [];
+        let database = null;
+        let useFirebase = false;
+
+        // Firebase設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyCCmjuGunlGpxMfmtO_3okftB3Q00MDmUo",
+            authDomain: "project-management-c9b36.firebaseapp.com",
+            databaseURL: "https://project-management-c9b36-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "project-management-c9b36",
+            storageBucket: "project-management-c9b36.firebasestorage.app",
+            messagingSenderId: "995736128302",
+            appId: "1:995736128302:web:71a2a187d5d692df6a08bf"
+        };
+
+        // Firebase初期化
+        function initFirebase() {
+            if (firebaseConfig.apiKey) {
+                try {
+                    firebase.initializeApp(firebaseConfig);
+                    database = firebase.database();
+                    useFirebase = true;
+                    updateFirebaseStatus('connected');
+                    document.getElementById('setupInstruction').classList.add('hide');
+                    loadFromFirebase();
+                } catch (error) {
+                    console.error('Firebase初期化エラー:', error);
+                    useFirebase = false;
+                    updateFirebaseStatus('disconnected');
+                    loadFromLocal();
+                }
+            } else {
+                // Firebase未設定の場合はローカルストレージ使用
+                useFirebase = false;
+                updateFirebaseStatus('local');
+                loadFromLocal();
+            }
+        }
+
+        function updateFirebaseStatus(status) {
+            const statusEl = document.getElementById('firebaseStatus');
+            statusEl.className = 'firebase-status ' + status;
+
+            if (status === 'connected') {
+                statusEl.textContent = '🟢 同期中';
+            } else if (status === 'disconnected') {
+                statusEl.textContent = '🔴 接続エラー';
+            } else {
+                statusEl.textContent = '📡 ローカルモード';
+            }
+        }
+
+        // Firebaseからデータ読み込み
+        function loadFromFirebase() {
+            database.ref('projects').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    projects = Object.values(data);
+                } else {
+                    projects = [];
+                }
+                renderProjects();
+            });
+        }
+
+        // ローカルストレージから読み込み
+        function loadFromLocal() {
+            const saved = localStorage.getItem('promotionProjects');
+            if (saved) {
+                projects = JSON.parse(saved);
+            }
+            renderProjects();
+        }
+
+        // データ保存
+        function saveProjects() {
+            if (useFirebase && database) {
+                // Firebaseに保存
+                const projectsObj = {};
+                projects.forEach(p => {
+                    projectsObj[p.id] = p;
+                });
+                database.ref('projects').set(projectsObj);
+            } else {
+                // ローカルストレージに保存
+                localStorage.setItem('promotionProjects', JSON.stringify(projects));
+            }
+            updateStats();
+        }
+
+        // プロジェクト追加
+        function addProject() {
+            const input = document.getElementById('projectName');
+            const name = input.value.trim();
+
+            if (name) {
+                const project = {
+                    id: Date.now(),
+                    name: name,
+                    status: '企画中',
+                    createdDate: new Date().toLocaleDateString('ja-JP'),
+                    movedDate: new Date().toLocaleDateString('ja-JP')
+                };
+
+                projects.push(project);
+                saveProjects();
+
+                if (!useFirebase) {
+                    renderProjects();
+                }
+
+                input.value = '';
+            }
+        }
+
+        // Enterキー対応
+        document.getElementById('projectName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addProject();
+            }
+        });
+
+        // プロジェクト削除
+        function deleteProject(id) {
+            if (confirm('削除しますか？')) {
+                projects = projects.filter(p => p.id !== id);
+                saveProjects();
+
+                if (!useFirebase) {
+                    renderProjects();
+                }
+            }
+        }
+
+        // プロジェクト表示
+        function renderProjects() {
+            document.querySelectorAll('.cards').forEach(area => {
+                area.innerHTML = '';
+            });
+
+            projects.forEach(project => {
+                const card = createCard(project);
+                const area = document.querySelector(`.cards[data-status="${project.status}"]`);
+                if (area) {
+                    area.appendChild(card);
+                }
+            });
+
+            updateStats();
+        }
+
+        // カード作成
+        function createCard(project) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.draggable = true;
+            card.dataset.id = project.id;
+
+            card.innerHTML = `
+                <div class="card-title">${project.name}</div>
+                <div class="card-date">作成: ${project.createdDate}</div>
+                <div class="card-date">移動: ${project.movedDate}</div>
+                <button class="card-delete" onclick="deleteProject(${project.id})">削除</button>
+            `;
+
+            card.addEventListener('dragstart', handleDragStart);
+            card.addEventListener('dragend', handleDragEnd);
+
+            // タッチ対応
+            card.addEventListener('touchstart', handleTouchStart, {passive: false});
+            card.addEventListener('touchmove', handleTouchMove, {passive: false});
+            card.addEventListener('touchend', handleTouchEnd, {passive: false});
+
+            return card;
+        }
+
+        // ドラッグイベント
+        function handleDragStart(e) {
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('projectId', e.target.dataset.id);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        // タッチイベント（スマホ対応）
+        let touchedCard = null;
+        let touchStartY = 0;
+        let touchStartX = 0;
+
+        function handleTouchStart(e) {
+            touchedCard = e.currentTarget;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+
+        function handleTouchMove(e) {
+            if (!touchedCard) return;
+            e.preventDefault();
+        }
+
+        function handleTouchEnd(e) {
+            if (!touchedCard) return;
+
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const element = document.elementFromPoint(touchEndX, touchEndY);
+            const column = element?.closest('.column');
+
+            if (column) {
+                const newStatus = column.dataset.status;
+                const projectId = parseInt(touchedCard.dataset.id);
+                const project = projects.find(p => p.id === projectId);
+
+                if (project && project.status !== newStatus) {
+                    project.status = newStatus;
+                    project.movedDate = new Date().toLocaleDateString('ja-JP');
+                    saveProjects();
+
+                    if (!useFirebase) {
+                        renderProjects();
+                    }
+                }
+            }
+
+            touchedCard = null;
+        }
+
+        // ドロップエリア設定
+        document.querySelectorAll('.cards').forEach(area => {
+            area.addEventListener('dragover', handleDragOver);
+            area.addEventListener('drop', handleDrop);
+            area.addEventListener('dragenter', handleDragEnter);
+            area.addEventListener('dragleave', handleDragLeave);
+        });
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            e.target.closest('.column')?.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.target.closest('.column')?.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const column = e.target.closest('.column');
+            if (column) {
+                column.classList.remove('drag-over');
+            }
+
+            const projectId = parseInt(e.dataTransfer.getData('projectId'));
+            const newStatus = e.target.dataset.status;
+            const project = projects.find(p => p.id === projectId);
+
+            if (project) {
+                project.status = newStatus;
+                project.movedDate = new Date().toLocaleDateString('ja-JP');
+                saveProjects();
+
+                if (!useFirebase) {
+                    renderProjects();
+                }
+            }
+
+            return false;
+        }
+
+        // 統計更新
+        function updateStats() {
+            document.getElementById('totalProjects').textContent = projects.length;
+            const waiting = projects.filter(p => p.status === '承認依頼済').length;
+            document.getElementById('waitingApproval').textContent = waiting;
+        }
+
+        // 初期化
+        initFirebase();
+    </script>
+</body>
+</html>
