@@ -75,6 +75,30 @@
             min-width: 200px;
         }
 
+        .add-project input[type="date"]::-webkit-datetime-edit-text,
+        .add-project input[type="date"]::-webkit-datetime-edit-month-field,
+        .add-project input[type="date"]::-webkit-datetime-edit-day-field,
+        .add-project input[type="date"]::-webkit-datetime-edit-year-field {
+            color: #999;
+        }
+
+        .add-project input[type="date"]:focus::-webkit-datetime-edit-text,
+        .add-project input[type="date"]:focus::-webkit-datetime-edit-month-field,
+        .add-project input[type="date"]:focus::-webkit-datetime-edit-day-field,
+        .add-project input[type="date"]:focus::-webkit-datetime-edit-year-field {
+            color: #333;
+        }
+
+        .add-project input[type="date"]::before {
+            content: 'リリース日: ';
+            color: #999;
+            margin-right: 5px;
+        }
+
+        .add-project input[type="date"]:focus::before {
+            content: '';
+        }
+
         .add-project button {
             padding: 10px 20px;
             font-size: 14px;
@@ -406,7 +430,7 @@
         <div class="add-project">
             <input type="text" id="projectName" placeholder="プロジェクト名...">
             <input type="text" id="projectOwner" placeholder="担当者名...">
-            <input type="date" id="projectReleaseDate" placeholder="リリース日...">
+            <input type="date" id="projectReleaseDate" style="color: #999;">
             <button onclick="addProject()">➕ 追加</button>
         </div>
     </div>
@@ -671,10 +695,14 @@
                 `;
             }
 
+            const formattedReleaseDate = project.releaseDate && project.releaseDate !== '未設定'
+                ? project.releaseDate.replace(/-/g, '/')
+                : '未設定';
+
             card.innerHTML = `
                 <div class="card-title">${project.name}</div>
                 <div class="card-date">担当者: ${project.owner || '未設定'}</div>
-                <div class="card-date">リリース日: ${project.releaseDate || '未設定'}</div>
+                <div class="card-date">リリース日: ${formattedReleaseDate}</div>
                 <div class="card-date">作成日: ${project.createdDate}</div>
                 <div class="card-date">移動日: ${project.movedDate}</div>
                 <div class="next-report-date" onclick="openEditModal(${project.id})">
@@ -840,7 +868,22 @@
             if (!project) return;
 
             const nextReport = document.getElementById('editNextReport').value;
+            const oldNextReportDate = project.nextReportDate;
             project.nextReportDate = nextReport || '未設定';
+
+            // 次報告予定日を入力したら、自動的に次のステータスに移動
+            if (nextReport && oldNextReportDate === '未設定') {
+                const statusFlow = {
+                    '企画中': '企画内容部長報告✓',
+                    '制作中': '払い出し課長報告✓',
+                    'リリース準備中': 'リリース済'
+                };
+
+                if (statusFlow[project.status]) {
+                    project.status = statusFlow[project.status];
+                    project.movedDate = new Date().toLocaleDateString('ja-JP');
+                }
+            }
 
             saveProjects();
             if (!useFirebase) {
@@ -855,6 +898,13 @@
             if (!project) return;
 
             project.directorApproved = !project.directorApproved;
+
+            // チェックを入れたら自動的に次のステータス（制作中）に移動
+            if (project.directorApproved && project.status === '企画内容部長報告✓') {
+                project.status = '制作中';
+                project.movedDate = new Date().toLocaleDateString('ja-JP');
+            }
+
             saveProjects();
             if (!useFirebase) {
                 renderProjects();
@@ -867,6 +917,13 @@
             if (!project) return;
 
             project.managerApproved = !project.managerApproved;
+
+            // チェックを入れたら自動的に次のステータス（リリース準備中）に移動
+            if (project.managerApproved && project.status === '払い出し課長報告✓') {
+                project.status = 'リリース準備中';
+                project.movedDate = new Date().toLocaleDateString('ja-JP');
+            }
+
             saveProjects();
             if (!useFirebase) {
                 renderProjects();
