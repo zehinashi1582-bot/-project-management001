@@ -185,6 +185,108 @@
             background: #dc2626;
         }
 
+        .approval-check {
+            margin-top: 8px;
+            padding: 8px;
+            background: #fef3c7;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .approval-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .approval-check label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #92400e;
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal-field {
+            margin-bottom: 15px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .modal-field input {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .modal-save {
+            background: #10b981;
+            color: white;
+        }
+
+        .modal-cancel {
+            background: #6b7280;
+            color: white;
+        }
+
+        .approval-list {
+            font-size: 12px;
+            color: #333;
+        }
+
         .column.drag-over {
             background: #f3f4f6;
         }
@@ -277,7 +379,12 @@
                 総数: <span class="stat-number" id="totalProjects">0</span>
             </div>
             <div class="stat-item">
-                課長承認済: <span class="stat-number" id="waitingApproval">0</span>
+                部長承認済: <span class="stat-number" id="directorApproval">0</span>
+                <span class="approval-list" id="directorApprovalList"></span>
+            </div>
+            <div class="stat-item">
+                課長承認済: <span class="stat-number" id="managerApproval">0</span>
+                <span class="approval-list" id="managerApprovalList"></span>
             </div>
         </div>
         <div class="add-project">
@@ -312,6 +419,29 @@
         <div class="column" data-status="リリース済">
             <div class="column-header column-リリース済">🎉 リリース済</div>
             <div class="cards" data-status="リリース済"></div>
+        </div>
+    </div>
+
+    <!-- 編集モーダル -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">プロジェクト編集</div>
+            <div class="modal-field">
+                <label>プロジェクト名</label>
+                <input type="text" id="editName" readonly style="background: #f3f4f6;">
+            </div>
+            <div class="modal-field">
+                <label>担当者</label>
+                <input type="text" id="editOwner" readonly style="background: #f3f4f6;">
+            </div>
+            <div class="modal-field">
+                <label>次報告予定日</label>
+                <input type="date" id="editNextReport">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-save" onclick="saveEdit()">保存</button>
+                <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
+            </div>
         </div>
     </div>
 
@@ -427,7 +557,9 @@
                     nextReportDate: nextReport || '未設定',
                     status: '企画中',
                     createdDate: new Date().toLocaleDateString('ja-JP'),
-                    movedDate: new Date().toLocaleDateString('ja-JP')
+                    movedDate: new Date().toLocaleDateString('ja-JP'),
+                    directorApproved: false,
+                    managerApproved: false
                 };
 
                 projects.push(project);
@@ -498,12 +630,32 @@
             card.draggable = true;
             card.dataset.id = project.id;
 
+            let approvalCheckbox = '';
+            if (project.status === '企画内容部長承認済み') {
+                approvalCheckbox = `
+                    <div class="approval-check">
+                        <input type="checkbox" id="director-${project.id}" ${project.directorApproved ? 'checked' : ''}
+                               onchange="toggleDirectorApproval(${project.id})">
+                        <label for="director-${project.id}">部長承認完了</label>
+                    </div>
+                `;
+            } else if (project.status === '払い出し課長承認済み') {
+                approvalCheckbox = `
+                    <div class="approval-check">
+                        <input type="checkbox" id="manager-${project.id}" ${project.managerApproved ? 'checked' : ''}
+                               onchange="toggleManagerApproval(${project.id})">
+                        <label for="manager-${project.id}">課長承認完了</label>
+                    </div>
+                `;
+            }
+
             card.innerHTML = `
-                <div class="card-title">${project.name}</div>
+                <div class="card-title" onclick="openEditModal(${project.id})" style="cursor: pointer;">${project.name}</div>
                 <div class="card-date">担当者: ${project.owner || '未設定'}</div>
                 <div class="card-date">作成日: ${project.createdDate}</div>
                 <div class="card-date">移動日: ${project.movedDate}</div>
                 <div class="card-date">次報告予定日: ${project.nextReportDate || '未設定'}</div>
+                ${approvalCheckbox}
                 <button class="card-delete" onclick="deleteProject(${project.id})">削除</button>
             `;
 
@@ -623,8 +775,85 @@
         // 統計更新
         function updateStats() {
             document.getElementById('totalProjects').textContent = projects.length;
-            const waiting = projects.filter(p => p.status === '払い出し課長承認済み').length;
-            document.getElementById('waitingApproval').textContent = waiting;
+
+            const directorApproved = projects.filter(p => p.directorApproved);
+            const managerApproved = projects.filter(p => p.managerApproved);
+
+            document.getElementById('directorApproval').textContent = directorApproved.length;
+            document.getElementById('managerApproval').textContent = managerApproved.length;
+
+            document.getElementById('directorApprovalList').textContent =
+                directorApproved.length > 0 ? ' (' + directorApproved.map(p => p.name).join(', ') + ')' : '';
+            document.getElementById('managerApprovalList').textContent =
+                managerApproved.length > 0 ? ' (' + managerApproved.map(p => p.name).join(', ') + ')' : '';
+        }
+
+        // 編集モーダルを開く
+        let editingProjectId = null;
+        function openEditModal(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+
+            editingProjectId = projectId;
+            document.getElementById('editName').value = project.name;
+            document.getElementById('editOwner').value = project.owner || '未設定';
+            document.getElementById('editNextReport').value = project.nextReportDate !== '未設定' ? project.nextReportDate : '';
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        // モーダルを閉じる
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+            editingProjectId = null;
+        }
+
+        // 編集を保存
+        function saveEdit() {
+            if (!editingProjectId) return;
+
+            const project = projects.find(p => p.id === editingProjectId);
+            if (!project) return;
+
+            const nextReport = document.getElementById('editNextReport').value;
+            project.nextReportDate = nextReport || '未設定';
+
+            saveProjects();
+            if (!useFirebase) {
+                renderProjects();
+            }
+            closeModal();
+        }
+
+        // 部長承認トグル
+        function toggleDirectorApproval(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+
+            project.directorApproved = !project.directorApproved;
+            saveProjects();
+            if (!useFirebase) {
+                renderProjects();
+            }
+        }
+
+        // 課長承認トグル
+        function toggleManagerApproval(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+
+            project.managerApproved = !project.managerApproved;
+            saveProjects();
+            if (!useFirebase) {
+                renderProjects();
+            }
+        }
+
+        // モーダル外クリックで閉じる
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeModal();
+            }
         }
 
         // 初期化
