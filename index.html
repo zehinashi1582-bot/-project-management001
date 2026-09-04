@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="プロジェクト管理">
-    <title>プロモーション写真 プロジェクト管理ボード</title>
+    <meta name="apple-mobile-web-app-title" content="アセット管理">
+    <title>グローバルアセットステータス一覧</title>
     <style>
         * {
             margin: 0;
@@ -268,7 +268,7 @@
     </div>
 
     <div class="header">
-        <h1>🏍️ プロモーション写真管理</h1>
+        <h1>グローバルアセットステータス一覧</h1>
         <div class="firebase-status local" id="firebaseStatus">
             📡 ローカルモード（同期なし）
         </div>
@@ -283,6 +283,7 @@
         <div class="add-project">
             <input type="text" id="projectName" placeholder="プロジェクト名...">
             <input type="text" id="projectOwner" placeholder="担当者名...">
+            <input type="date" id="nextReportDate" style="padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 5px;">
             <button onclick="addProject()">➕ 追加</button>
         </div>
     </div>
@@ -298,9 +299,9 @@
             <div class="cards" data-status="企画内容部長承認済み"></div>
         </div>
 
-        <div class="column" data-status="アセット制作中">
-            <div class="column-header column-編集中">✏️ アセット制作中</div>
-            <div class="cards" data-status="アセット制作中"></div>
+        <div class="column" data-status="制作中">
+            <div class="column-header column-編集中">✏️ 制作中</div>
+            <div class="cards" data-status="制作中"></div>
         </div>
 
         <div class="column" data-status="払い出し課長承認済み">
@@ -413,14 +414,17 @@
         function addProject() {
             const nameInput = document.getElementById('projectName');
             const ownerInput = document.getElementById('projectOwner');
+            const nextReportInput = document.getElementById('nextReportDate');
             const name = nameInput.value.trim();
             const owner = ownerInput.value.trim();
+            const nextReport = nextReportInput.value;
 
             if (name) {
                 const project = {
                     id: Date.now(),
                     name: name,
                     owner: owner || '未設定',
+                    nextReportDate: nextReport || '未設定',
                     status: '企画中',
                     createdDate: new Date().toLocaleDateString('ja-JP'),
                     movedDate: new Date().toLocaleDateString('ja-JP')
@@ -435,6 +439,7 @@
 
                 nameInput.value = '';
                 ownerInput.value = '';
+                nextReportInput.value = '';
             }
         }
 
@@ -446,6 +451,12 @@
         });
 
         document.getElementById('projectOwner').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addProject();
+            }
+        });
+
+        document.getElementById('nextReportDate').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 addProject();
             }
@@ -492,6 +503,7 @@
                 <div class="card-date">担当者: ${project.owner || '未設定'}</div>
                 <div class="card-date">作成日: ${project.createdDate}</div>
                 <div class="card-date">移動日: ${project.movedDate}</div>
+                <div class="card-date">次報告予定日: ${project.nextReportDate || '未設定'}</div>
                 <button class="card-delete" onclick="deleteProject(${project.id})">削除</button>
             `;
 
