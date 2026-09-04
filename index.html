@@ -699,9 +699,14 @@
                 ? project.releaseDate.replace(/-/g, '/')
                 : '未設定';
 
-            const formattedReportDate = project.nextReportDate && project.nextReportDate !== '未設定'
-                ? project.nextReportDate.replace(/-/g, '/')
-                : '未設定';
+            let formattedReportDate = '未設定';
+            if (project.nextReportDate) {
+                if (project.nextReportDate === 'なし') {
+                    formattedReportDate = 'なし';
+                } else if (project.nextReportDate !== '未設定') {
+                    formattedReportDate = project.nextReportDate.replace(/-/g, '/');
+                }
+            }
 
             card.innerHTML = `
                 <div class="card-title">${project.name}</div>
@@ -869,7 +874,7 @@
 
             // 日付を yyyy-mm-dd 形式に変換（/区切りの場合）
             let dateValue = '';
-            if (project.nextReportDate && project.nextReportDate !== '未設定') {
+            if (project.nextReportDate && project.nextReportDate !== '未設定' && project.nextReportDate !== 'なし') {
                 dateValue = project.nextReportDate.replace(/\//g, '-');
             }
             document.getElementById('editNextReport').value = dateValue;
@@ -945,6 +950,7 @@
             if (project.managerApproved && project.status === '払い出し課長報告✓') {
                 project.status = 'リリース準備中';
                 project.movedDate = new Date().toLocaleDateString('ja-JP');
+                project.nextReportDate = 'なし'; // 報告予定日を「なし」に設定
             }
 
             saveProjects();
