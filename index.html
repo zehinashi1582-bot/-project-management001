@@ -903,6 +903,7 @@
             if (project.directorApproved && project.status === '企画内容部長報告✓') {
                 project.status = '制作中';
                 project.movedDate = new Date().toLocaleDateString('ja-JP');
+                project.nextReportDate = '未設定'; // 次報告予定日をクリア
             }
 
             saveProjects();
