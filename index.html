@@ -101,17 +101,16 @@
         .column {
             background: white;
             border-radius: 10px;
-            min-width: 250px;
-            max-width: 250px;
+            flex: 1;
+            min-width: 0;
             padding: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            flex-shrink: 0;
         }
 
         @media (max-width: 768px) {
             .column {
                 min-width: 200px;
-                max-width: 200px;
+                flex: 0 0 200px;
             }
         }
 
