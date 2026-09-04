@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="アセット管理">
-    <title>ステータス一覧_グローバルアセット制作</title>
+    <title>ステータス足立チェック用_グローバルアセット制作</title>
     <style>
         * {
             margin: 0;
@@ -410,7 +410,7 @@
     </div>
 
     <div class="header">
-        <h1>ステータス一覧_グローバルアセット制作</h1>
+        <h1>ステータス足立チェック用_グローバルアセット制作</h1>
         <div class="firebase-status local" id="firebaseStatus">
             📡 ローカルモード（同期なし）
         </div>
@@ -429,7 +429,6 @@
         </div>
         <div class="add-project">
             <input type="text" id="projectName" placeholder="プロジェクト名...">
-            <input type="text" id="projectOwner" placeholder="担当者名...">
             <input type="date" id="projectReleaseDate" style="color: #999;">
             <button onclick="addProject()">➕ 追加</button>
         </div>
@@ -474,10 +473,6 @@
             <div class="modal-field">
                 <label>プロジェクト名</label>
                 <input type="text" id="editName" readonly style="background: #f3f4f6;">
-            </div>
-            <div class="modal-field">
-                <label>担当者</label>
-                <input type="text" id="editOwner" readonly style="background: #f3f4f6;">
             </div>
             <div class="modal-field">
                 <label>報告予定日</label>
@@ -590,17 +585,14 @@
         // プロジェクト追加
         function addProject() {
             const nameInput = document.getElementById('projectName');
-            const ownerInput = document.getElementById('projectOwner');
             const releaseDateInput = document.getElementById('projectReleaseDate');
             const name = nameInput.value.trim();
-            const owner = ownerInput.value.trim();
             const releaseDate = releaseDateInput.value;
 
             if (name) {
                 const project = {
                     id: Date.now(),
                     name: name,
-                    owner: owner || '未設定',
                     releaseDate: releaseDate || '未設定',
                     nextReportDate: '未設定',
                     status: '企画中',
@@ -618,19 +610,12 @@
                 }
 
                 nameInput.value = '';
-                ownerInput.value = '';
                 releaseDateInput.value = '';
             }
         }
 
         // Enterキー対応
         document.getElementById('projectName').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addProject();
-            }
-        });
-
-        document.getElementById('projectOwner').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 addProject();
             }
@@ -742,7 +727,6 @@
 
             card.innerHTML = `
                 <div class="card-title">${project.name}</div>
-                <div class="card-date">担当者: ${project.owner || '未設定'}</div>
                 <div class="card-date">リリース日: ${formattedReleaseDate}</div>
                 <div class="card-date">作成日: ${project.createdDate}</div>
                 <div class="card-date">移動日: ${project.movedDate}</div>
@@ -902,7 +886,6 @@
 
             editingProjectId = projectId;
             document.getElementById('editName').value = project.name;
-            document.getElementById('editOwner').value = project.owner || '未設定';
 
             // 日付を yyyy-mm-dd 形式に変換（/区切りの場合）
             let dateValue = '';
