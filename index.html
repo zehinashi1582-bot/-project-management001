@@ -128,6 +128,7 @@
         .column-撮影中 { background: #3b82f6; }
         .column-編集中 { background: #8b5cf6; }
         .column-承認取得済 { background: #10b981; }
+        .column-リリース準備中 { background: #f59e0b; }
         .column-リリース済 { background: #6b7280; }
 
         .cards {
@@ -405,6 +406,7 @@
         <div class="add-project">
             <input type="text" id="projectName" placeholder="プロジェクト名...">
             <input type="text" id="projectOwner" placeholder="担当者名...">
+            <input type="date" id="projectReleaseDate" placeholder="リリース日...">
             <button onclick="addProject()">➕ 追加</button>
         </div>
     </div>
@@ -415,9 +417,9 @@
             <div class="cards" data-status="企画中"></div>
         </div>
 
-        <div class="column" data-status="企画内容部長報告チェック">
-            <div class="column-header column-撮影中">📷 企画内容部長報告チェック</div>
-            <div class="cards" data-status="企画内容部長報告チェック"></div>
+        <div class="column" data-status="企画内容部長報告✓">
+            <div class="column-header column-撮影中">📷 企画内容部長報告✓</div>
+            <div class="cards" data-status="企画内容部長報告✓"></div>
         </div>
 
         <div class="column" data-status="制作中">
@@ -425,9 +427,14 @@
             <div class="cards" data-status="制作中"></div>
         </div>
 
-        <div class="column" data-status="払い出し課長報告チェック">
-            <div class="column-header column-承認取得済">✅ 払い出し課長報告チェック</div>
-            <div class="cards" data-status="払い出し課長報告チェック"></div>
+        <div class="column" data-status="払い出し課長報告✓">
+            <div class="column-header column-承認取得済">✅ 払い出し課長報告✓</div>
+            <div class="cards" data-status="払い出し課長報告✓"></div>
+        </div>
+
+        <div class="column" data-status="リリース準備中">
+            <div class="column-header column-リリース準備中">🚀 リリース準備中</div>
+            <div class="cards" data-status="リリース準備中"></div>
         </div>
 
         <div class="column" data-status="リリース済">
@@ -558,14 +565,17 @@
         function addProject() {
             const nameInput = document.getElementById('projectName');
             const ownerInput = document.getElementById('projectOwner');
+            const releaseDateInput = document.getElementById('projectReleaseDate');
             const name = nameInput.value.trim();
             const owner = ownerInput.value.trim();
+            const releaseDate = releaseDateInput.value;
 
             if (name) {
                 const project = {
                     id: Date.now(),
                     name: name,
                     owner: owner || '未設定',
+                    releaseDate: releaseDate || '未設定',
                     nextReportDate: '未設定',
                     status: '企画中',
                     createdDate: new Date().toLocaleDateString('ja-JP'),
@@ -583,6 +593,7 @@
 
                 nameInput.value = '';
                 ownerInput.value = '';
+                releaseDateInput.value = '';
             }
         }
 
@@ -594,6 +605,12 @@
         });
 
         document.getElementById('projectOwner').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addProject();
+            }
+        });
+
+        document.getElementById('projectReleaseDate').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 addProject();
             }
@@ -636,7 +653,7 @@
             card.dataset.id = project.id;
 
             let approvalCheckbox = '';
-            if (project.status === '企画内容部長報告チェック') {
+            if (project.status === '企画内容部長報告✓') {
                 approvalCheckbox = `
                     <div class="approval-check">
                         <input type="checkbox" id="director-${project.id}" ${project.directorApproved ? 'checked' : ''}
@@ -644,7 +661,7 @@
                         <label for="director-${project.id}">部長報告完了</label>
                     </div>
                 `;
-            } else if (project.status === '払い出し課長報告チェック') {
+            } else if (project.status === '払い出し課長報告✓') {
                 approvalCheckbox = `
                     <div class="approval-check">
                         <input type="checkbox" id="manager-${project.id}" ${project.managerApproved ? 'checked' : ''}
@@ -657,6 +674,7 @@
             card.innerHTML = `
                 <div class="card-title">${project.name}</div>
                 <div class="card-date">担当者: ${project.owner || '未設定'}</div>
+                <div class="card-date">リリース日: ${project.releaseDate || '未設定'}</div>
                 <div class="card-date">作成日: ${project.createdDate}</div>
                 <div class="card-date">移動日: ${project.movedDate}</div>
                 <div class="next-report-date" onclick="openEditModal(${project.id})">
