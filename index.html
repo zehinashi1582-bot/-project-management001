@@ -405,7 +405,6 @@
         <div class="add-project">
             <input type="text" id="projectName" placeholder="プロジェクト名...">
             <input type="text" id="projectOwner" placeholder="担当者名...">
-            <input type="date" id="nextReportDate" style="padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 5px;">
             <button onclick="addProject()">➕ 追加</button>
         </div>
     </div>
@@ -559,17 +558,15 @@
         function addProject() {
             const nameInput = document.getElementById('projectName');
             const ownerInput = document.getElementById('projectOwner');
-            const nextReportInput = document.getElementById('nextReportDate');
             const name = nameInput.value.trim();
             const owner = ownerInput.value.trim();
-            const nextReport = nextReportInput.value;
 
             if (name) {
                 const project = {
                     id: Date.now(),
                     name: name,
                     owner: owner || '未設定',
-                    nextReportDate: nextReport || '未設定',
+                    nextReportDate: '未設定',
                     status: '企画中',
                     createdDate: new Date().toLocaleDateString('ja-JP'),
                     movedDate: new Date().toLocaleDateString('ja-JP'),
@@ -586,7 +583,6 @@
 
                 nameInput.value = '';
                 ownerInput.value = '';
-                nextReportInput.value = '';
             }
         }
 
@@ -598,12 +594,6 @@
         });
 
         document.getElementById('projectOwner').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addProject();
-            }
-        });
-
-        document.getElementById('nextReportDate').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 addProject();
             }
